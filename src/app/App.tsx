@@ -371,23 +371,30 @@ export default function App() {
               )}
             </Card>
 
-            {/* Course Popularity Ranking */}
+            {/* Learning Duration Ranking */}
             <Card className="p-4 mb-3 shadow-sm">
-              <h3 className="text-sm font-medium mb-3">课程学习时长排行TOP5</h3>
+              <h3 className="text-sm font-medium mb-3">学习时长排行</h3>
               <div className="space-y-2">
-                {courseRankings.map((course) => (
+                {courseRankings.map((course, index) => (
                   <div
                     key={course.rank}
-                    className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg active:bg-gray-100 cursor-pointer"
+                    className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg active:bg-gray-100 cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-semibold">
-                      {course.emoji}
+                    <div className={`w-6 h-6 rounded flex items-center justify-center text-xs font-medium text-white ${index === 0 ? 'bg-amber-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-400' : 'bg-gray-300'}`}>
+                      {course.rank}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium truncate">{course.name}</p>
-                      <p className="text-[10px] text-gray-500">({course.duration.toFixed(1)} h)</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 bg-gray-200 rounded-full h-1">
+                          <div
+                            className="h-1 rounded-full"
+                            style={{ width: `${((course.duration / courseRankings[0].duration) * 100).toFixed(0)}%`, backgroundColor: course.color }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-gray-500">{course.duration.toFixed(1)}h</span>
+                      </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
                   </div>
                 ))}
               </div>
