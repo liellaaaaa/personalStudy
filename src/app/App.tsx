@@ -281,17 +281,14 @@ export default function App() {
             </Card>
 
             {/* Current Course Progress */}
-            <Card className="p-4 mb-3 shadow-sm">
-              <div className="flex items-start justify-between mb-3">
+            <Card className="p-3 mb-3 shadow-sm">
+              <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 mb-1">当前课程</p>
-                  <h3 className="text-sm font-medium mb-2">{currentCourse.name}</h3>
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-600 text-xs px-2 py-0.5">
-                    {currentCourse.status}
-                  </Badge>
+                  <h3 className="text-sm font-medium">{currentCourse.name}</h3>
                 </div>
-                <button className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-md hover:bg-blue-700 active:bg-blue-800 ml-2 flex-shrink-0">
-                  继续学习
+                <button className="text-xs text-blue-600 hover:text-blue-700 active:text-blue-800 flex items-center gap-1 ml-2 flex-shrink-0">
+                  继续学习 <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
               <div className="mt-3">
