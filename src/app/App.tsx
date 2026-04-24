@@ -1,53 +1,30 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronRight, Trophy, Star, Heart, ChevronLeft, MoreVertical, Wifi, Battery, Signal, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
 import { Progress } from './components/ui/progress';
 import { Card } from './components/ui/card';
 import { Badge } from './components/ui/badge';
 
-// Mock data
-const currentCourse = {
-  name: '高建华的经营方法论',
-  progress: 45,
-  status: '学习中'
-};
+// Mock data - 完整数据
+const allCourseData = [
+  { rank: 1, name: '高建华的经营方法论', duration: 12.7, color: '#3b82f6' },
+  { rank: 2, name: '给决策者的战略课', duration: 7.0, color: '#8b5cf6' },
+  { rank: 3, name: 'AI视频教程 | 零基础...', duration: 4.8, color: '#ec4899' },
+  { rank: 4, name: 'AIGC 10倍办公效率...', duration: 3.2, color: '#f59e0b' },
+  { rank: 5, name: '大模型的商业新范式...', duration: 2.1, color: '#10b981' }
+];
 
-const latestExam = {
-  courseName: '高建华的经营方法论',
-  result: '及格',
-  date: '2026-04-15',
-  isPassed: true
-};
-
-const examHistory = [
+const allExamData = [
   { date: '2026-04-15', course: '高建华的经营方法论', result: '及格', isPassed: true },
   { date: '2026-03-20', course: '给决策者的战略课', result: '及格', isPassed: true },
   { date: '2026-02-10', course: 'AI视频教程 | 零基础...', result: '不及格', isPassed: false },
   { date: '2026-01-25', course: 'AIGC 10倍办公效率...', result: '及格', isPassed: true }
 ];
 
-const learningAchievements = [
-  { icon: Trophy, title: '总时长冠军', course: '高建华的经营方法论', value: '764分钟', color: 'from-amber-400 to-orange-500' },
-  { icon: Star, title: '拓展学习之星', course: '给决策者的战略课', value: '422分钟', color: 'from-blue-400 to-indigo-500' },
-  { icon: Heart, title: '最爱课程', course: 'AI视频教程 | 零基础...', value: '288分钟', color: 'from-pink-400 to-rose-500' }
-];
-
-const courseRankings = [
-  { rank: 1, name: '高建华的经营方法论', duration: 12.7, emoji: '🏆', color: '#3b82f6' },
-  { rank: 2, name: '给决策者的战略课', duration: 7.0, emoji: '🥈', color: '#8b5cf6' },
-  { rank: 3, name: 'AI视频教程 | 零基础...', duration: 4.8, emoji: '🥉', color: '#ec4899' },
-  { rank: 4, name: 'AIGC 10倍办公效率...', duration: 3.2, emoji: '4', color: '#f59e0b' },
-  { rank: 5, name: '大模型的商业新范式...', duration: 2.1, emoji: '5', color: '#10b981' }
-];
-
-const totalStudyTime = 29.8; // 总学时（小时）
-
-const passRateData = [
-  { name: '高建华的经营方法论', rate: 92 },
-  { name: '给决策者的战略课', rate: 85 },
-  { name: 'AI视频教程 | 零基础...', rate: 78 },
-  { name: 'AIGC 10倍办公效率...', rate: 88 },
-  { name: '大模型的商业新范式...', rate: 81 }
-];
+const currentCourse = {
+  name: '高建华的经营方法论',
+  progress: 45,
+  status: '学习中'
+};
 
 // 生成日历数据
 const generateCalendarDays = (year: number, month: number) => {
@@ -55,12 +32,10 @@ const generateCalendarDays = (year: number, month: number) => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const days: (number | null)[] = [];
 
-  // 填充空白
   for (let i = 0; i < firstDay; i++) {
     days.push(null);
   }
 
-  // 填充日期
   for (let i = 1; i <= daysInMonth; i++) {
     days.push(i);
   }
@@ -81,6 +56,52 @@ export default function App() {
   const [showYearMonthMenu, setShowYearMonthMenu] = useState(false);
 
   const calendarDays = generateCalendarDays(currentYear, currentMonth);
+
+  // 计算筛选后的数据
+  const filteredData = useMemo(() => {
+    if (!startDate || !endDate) {
+      // 无筛选 - 返回全部数据
+      return {
+        totalTime: 29.8,
+        courses: allCourseData,
+        exams: allExamData,
+        examStats: { total: 4, passed: 3, failed: 1, passRate: 75 }
+      };
+    }
+
+    // 计算筛选的天数
+    const selectedDays = endDate - startDate + 1;
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const ratio = selectedDays / daysInMonth;
+
+    // 模拟筛选后的数据 - 按比例缩减
+    const filteredTime = (29.8 * ratio).toFixed(1);
+    const filteredCourses = allCourseData.map(course => ({
+      ...course,
+      duration: +(course.duration * ratio).toFixed(1)
+    }));
+
+    // 筛选考试记录
+    const filteredExams = allExamData.filter(exam => {
+      const examDay = parseInt(exam.date.split('-')[2]);
+      return examDay >= startDate && examDay <= endDate && parseInt(exam.date.split('-')[1]) === currentMonth + 1;
+    });
+
+    const passed = filteredExams.filter(e => e.isPassed).length;
+    const passRate = filteredExams.length > 0 ? Math.round((passed / filteredExams.length) * 100) : 0;
+
+    return {
+      totalTime: parseFloat(filteredTime),
+      courses: filteredCourses,
+      exams: filteredExams,
+      examStats: {
+        total: filteredExams.length,
+        passed,
+        failed: filteredExams.length - passed,
+        passRate
+      }
+    };
+  }, [startDate, endDate, currentMonth, currentYear]);
 
   const prevMonth = () => {
     if (currentMonth === 0) {
@@ -113,7 +134,6 @@ export default function App() {
         setSelecting('start');
         setShowCalendar(false);
       } else {
-        // 如果选的结束日期早于开始日期，重新选开始日期
         setStartDate(day);
         setEndDate(null);
       }
@@ -127,12 +147,14 @@ export default function App() {
 
   const getDateText = () => {
     if (startDate && endDate) {
-      return `${startDate}月${endDate}日`;
+      return `${currentYear}年${currentMonth + 1}月${startDate}日 - ${endDate}日`;
     } else if (startDate) {
-      return `${startDate}月 - 选择结束日期`;
+      return `${currentMonth + 1}月${startDate}日 - 选择结束日期`;
     }
     return '选择日期范围';
   };
+
+  const isFiltered = startDate !== null && endDate !== null;
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -163,7 +185,12 @@ export default function App() {
             {/* Total Study Time with Course Distribution */}
             <Card className="p-4 mb-3 shadow-sm">
               <div className="flex items-start justify-between mb-3">
-                <h3 className="text-sm font-medium">个人总学时</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium">个人总学时</h3>
+                  {isFiltered && (
+                    <Badge className="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5">已筛选</Badge>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowCalendar(!showCalendar)}
                   className="text-blue-600 p-1"
@@ -172,13 +199,13 @@ export default function App() {
                 </button>
               </div>
               <div className="text-center mb-4">
-                <p className="text-3xl font-semibold text-blue-600">{totalStudyTime}</p>
+                <p className="text-3xl font-semibold text-blue-600">{filteredData.totalTime}</p>
                 <p className="text-xs text-gray-500">小时</p>
               </div>
 
               {/* Calendar Filter - Inline */}
               {showCalendar && (
-                <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="border rounded-lg p-3 bg-gray-50 mb-3">
                   <div className="flex items-center justify-between mb-3">
                     <button onClick={prevMonth} className="p-1">
                       <ChevronLeft className="w-4 h-4" />
@@ -252,15 +279,24 @@ export default function App() {
                   <div className="mt-3 text-center text-xs text-gray-500">
                     {getDateText()}
                   </div>
+
+                  {isFiltered && (
+                    <button
+                      onClick={() => { setStartDate(null); setEndDate(null); }}
+                      className="mt-2 w-full text-xs text-gray-500 py-1 border rounded hover:bg-gray-50"
+                    >
+                      清除筛选
+                    </button>
+                  )}
                 </div>
               )}
 
               {/* Course Distribution Chart */}
-              <div className="mb-3">
+              <div className="mb-0">
                 <p className="text-xs text-gray-600 mb-2">课程分布</p>
                 <div className="space-y-2">
-                  {courseRankings.map((course) => {
-                    const percentage = ((course.duration / totalStudyTime) * 100).toFixed(1);
+                  {filteredData.courses.map((course) => {
+                    const percentage = ((course.duration / filteredData.totalTime) * 100).toFixed(1);
                     return (
                       <div key={course.rank}>
                         <div className="flex items-center justify-between mb-1">
@@ -317,20 +353,22 @@ export default function App() {
                 <div className="relative w-32 h-32">
                   <svg className="w-full h-full transform -rotate-90">
                     <circle cx="64" cy="64" r="56" fill="none" stroke="#f3f4f6" strokeWidth="12" />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      fill="none"
-                      stroke="#10b981"
-                      strokeWidth="12"
-                      strokeDasharray={`${(3/4) * 2 * Math.PI * 56} ${2 * Math.PI * 56}`}
-                      strokeLinecap="round"
-                    />
+                    {filteredData.examStats.total > 0 && (
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="56"
+                        fill="none"
+                        stroke="#10b981"
+                        strokeWidth="12"
+                        strokeDasharray={`${(filteredData.examStats.passed / filteredData.examStats.total) * 2 * Math.PI * 56} ${2 * Math.PI * 56}`}
+                        strokeLinecap="round"
+                      />
+                    )}
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <p className="text-[10px] text-gray-400">考试总数</p>
-                    <p className="text-2xl font-semibold">4</p>
+                    <p className="text-2xl font-semibold">{filteredData.examStats.total}</p>
                   </div>
                 </div>
               </div>
@@ -340,23 +378,23 @@ export default function App() {
                     <div className="w-2 h-2 rounded-full bg-green-500" />
                     <span className="text-xs text-gray-600">及格</span>
                   </div>
-                  <p className="text-xl font-semibold">3</p>
-                  <p className="text-[10px] text-gray-400">75%</p>
+                  <p className="text-xl font-semibold">{filteredData.examStats.passed}</p>
+                  <p className="text-[10px] text-gray-400">{filteredData.examStats.passRate}%</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <div className="w-2 h-2 rounded-full bg-amber-500" />
                     <span className="text-xs text-gray-600">不及格</span>
                   </div>
-                  <p className="text-xl font-semibold">1</p>
-                  <p className="text-[10px] text-gray-400">25%</p>
+                  <p className="text-xl font-semibold">{filteredData.examStats.failed}</p>
+                  <p className="text-[10px] text-gray-400">{100 - filteredData.examStats.passRate}%</p>
                 </div>
               </div>
 
               {/* Exam History Details */}
               {showExamDetails && (
                 <div className="mt-4 pt-4 border-t space-y-3">
-                  {examHistory.map((exam, index) => (
+                  {filteredData.exams.map((exam, index) => (
                     <div key={index} className="flex items-start justify-between">
                       <div className="flex-1">
                         <p className="text-xs font-medium">{exam.course}</p>
@@ -373,9 +411,9 @@ export default function App() {
 
             {/* Learning Duration Ranking */}
             <Card className="p-4 mb-3 shadow-sm">
-              <h3 className="text-sm font-medium mb-3">学习时长排行</h3>
+              <h3 className="text-sm font-medium mb-3">课程时长排行</h3>
               <div className="space-y-2">
-                {courseRankings.map((course, index) => (
+                {filteredData.courses.map((course, index) => (
                   <div
                     key={course.rank}
                     className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg active:bg-gray-100 cursor-pointer"
@@ -389,7 +427,7 @@ export default function App() {
                         <div className="flex-1 bg-gray-200 rounded-full h-1">
                           <div
                             className="h-1 rounded-full"
-                            style={{ width: `${((course.duration / courseRankings[0].duration) * 100).toFixed(0)}%`, backgroundColor: course.color }}
+                            style={{ width: `${((course.duration / filteredData.courses[0].duration) * 100).toFixed(0)}%`, backgroundColor: course.color }}
                           />
                         </div>
                         <span className="text-[10px] text-gray-500">{course.duration.toFixed(1)}h</span>
